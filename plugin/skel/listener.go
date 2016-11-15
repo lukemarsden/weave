@@ -20,8 +20,8 @@ const (
 
 type Driver interface {
 	GetCapabilities() (*api.GetCapabilityResponse, error)
-	CreateNetwork(create *api.CreateNetworkRequest) error
-	DeleteNetwork(delete *api.DeleteNetworkRequest) error
+	CreateNetwork(create *api.AllocateNetworkRequest) error
+	DeleteNetwork(delete *api.FreeNetworkRequest) error
 	CreateEndpoint(create *api.CreateEndpointRequest) (*api.CreateEndpointResponse, error)
 	DeleteEndpoint(delete *api.DeleteEndpointRequest) error
 	EndpointInfo(req *api.EndpointInfoRequest) (*api.EndpointInfoResponse, error)
@@ -51,8 +51,12 @@ func Listen(socket net.Listener, driver Driver, ipamDriver ipamapi.Ipam) error {
 	handleMethod(networkReceiver, "GetCapabilities", listener.getCapabilities)
 
 	if driver != nil {
-		handleMethod(networkReceiver, "CreateNetwork", listener.createNetwork)
-		handleMethod(networkReceiver, "DeleteNetwork", listener.deleteNetwork)
+		//handleMethod(networkReceiver, "CreateNetwork", listener.createNetwork)
+		//handleMethod(networkReceiver, "DeleteNetwork", listener.deleteNetwork)
+
+		handleMethod(networkReceiver, "NetworkAllocate", listener.createNetwork)
+		handleMethod(networkReceiver, "NetworkFree", listener.deleteNetwork)
+
 		handleMethod(networkReceiver, "CreateEndpoint", listener.createEndpoint)
 		handleMethod(networkReceiver, "DeleteEndpoint", listener.deleteEndpoint)
 		handleMethod(networkReceiver, "EndpointOperInfo", listener.infoEndpoint)
@@ -106,7 +110,7 @@ func (listener *listener) getCapabilities(w http.ResponseWriter, r *http.Request
 }
 
 func (listener *listener) createNetwork(w http.ResponseWriter, r *http.Request) {
-	var create api.CreateNetworkRequest
+	var create api.AllocateNetworkRequest
 	err := json.NewDecoder(r.Body).Decode(&create)
 	if err != nil {
 		sendError(w, "Unable to decode JSON payload: "+err.Error(), http.StatusBadRequest)
@@ -116,7 +120,7 @@ func (listener *listener) createNetwork(w http.ResponseWriter, r *http.Request) 
 }
 
 func (listener *listener) deleteNetwork(w http.ResponseWriter, r *http.Request) {
-	var delete api.DeleteNetworkRequest
+	var delete api.FreeNetworkRequest
 	if err := json.NewDecoder(r.Body).Decode(&delete); err != nil {
 		sendError(w, "Unable to decode JSON payload: "+err.Error(), http.StatusBadRequest)
 		return

@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/docker/libnetwork/drivers/remote/api"
-	"github.com/docker/libnetwork/netlabel"
 	"github.com/docker/libnetwork/types"
 	"golang.org/x/sys/unix"
 
@@ -61,31 +60,13 @@ func (driver *driver) GetCapabilities() (*api.GetCapabilityResponse, error) {
 	return caps, nil
 }
 
-func (driver *driver) CreateNetwork(create *api.CreateNetworkRequest) error {
+func (driver *driver) CreateNetwork(create *api.AllocateNetworkRequest) error {
 	driver.logReq("CreateNetwork", create, create.NetworkID)
-	_, err := driver.setupNetworkInfo(create.NetworkID, true, stringOptions(create))
+	_, err := driver.setupNetworkInfo(create.NetworkID, true, create.Options)
 	return err
 }
 
-// Deal with excessively-generic way the options get decoded from JSON
-func stringOptions(create *api.CreateNetworkRequest) map[string]string {
-	if create.Options != nil {
-		if data, found := create.Options[netlabel.GenericData]; found {
-			if options, ok := data.(map[string]interface{}); ok {
-				out := make(map[string]string, len(options))
-				for key, value := range options {
-					if str, ok := value.(string); ok {
-						out[key] = str
-					}
-				}
-				return out
-			}
-		}
-	}
-	return nil
-}
-
-func (driver *driver) DeleteNetwork(delreq *api.DeleteNetworkRequest) error {
+func (driver *driver) DeleteNetwork(delreq *api.FreeNetworkRequest) error {
 	driver.logReq("DeleteNetwork", delreq, delreq.NetworkID)
 	driver.Lock()
 	delete(driver.networks, delreq.NetworkID)

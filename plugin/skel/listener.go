@@ -51,11 +51,11 @@ func Listen(socket net.Listener, driver Driver, ipamDriver ipamapi.Ipam) error {
 	handleMethod(networkReceiver, "GetCapabilities", listener.getCapabilities)
 
 	if driver != nil {
-		//handleMethod(networkReceiver, "CreateNetwork", listener.createNetwork)
-		//handleMethod(networkReceiver, "DeleteNetwork", listener.deleteNetwork)
+		handleMethod(networkReceiver, "CreateNetwork", listener.nullResponse)
+		handleMethod(networkReceiver, "DeleteNetwork", listener.nullResponse)
 
-		handleMethod(networkReceiver, "NetworkAllocate", listener.createNetwork)
-		handleMethod(networkReceiver, "NetworkFree", listener.deleteNetwork)
+		handleMethod(networkReceiver, "AllocateNetwork", listener.createNetwork)
+		handleMethod(networkReceiver, "FreeNetwork", listener.deleteNetwork)
 
 		handleMethod(networkReceiver, "CreateEndpoint", listener.createEndpoint)
 		handleMethod(networkReceiver, "DeleteEndpoint", listener.deleteEndpoint)
@@ -107,6 +107,10 @@ func (listener *listener) handshake(w http.ResponseWriter, r *http.Request) {
 func (listener *listener) getCapabilities(w http.ResponseWriter, r *http.Request) {
 	caps, err := listener.d.GetCapabilities()
 	objectOrErrorResponse(w, caps, err)
+}
+
+func (listener *listener) nullResponse(w http.ResponseWriter, r *http.Request) {
+	objectOrErrorResponse(w, nil, nil)
 }
 
 func (listener *listener) createNetwork(w http.ResponseWriter, r *http.Request) {
